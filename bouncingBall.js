@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 const gravity = 0.5; // Gravity constant
 const elasticity = 0.7; // Bounce efficiency
 const dragFactor = 0.01; // Drag coefficient
-const velocityScale = 0.03; // Scale down the calculated velocities
+const velocityScale = 0.1; // Scale down the calculated velocities
 const imageSize = 120; // Size of the skull image
 let isDragging = false;
 let lastMousePosition = { x: 0, y: 0 };
@@ -19,7 +19,7 @@ let vx = 0; // Horizontal velocity
 
 // Load background image
 const backgroundImage = new Image();
-backgroundImage.src = 'background.png';
+backgroundImage.src = 'pecanEnergies.png';
 
 // Load skull image
 const skullImage = new Image();
@@ -31,20 +31,22 @@ function isMouseOnSkull(mouseX, mouseY) {
     return distX * distX + distY * distY <= (imageSize / 2) * (imageSize / 2);
 }
 
-function calculateVelocityOnRelease() {
-    const timeDelta = (lastTime - secondLastTime) / 1000; // Time in seconds
-    if (timeDelta === 0 || lastTime === secondLastTime) return { vx: 0, vy: 0 };
+function getCursorPosition(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
 
-    const vx = ((lastMousePosition.x - secondLastMousePosition.x) / timeDelta) * velocityScale;
-    const vy = ((lastMousePosition.y - secondLastMousePosition.y) / timeDelta) * velocityScale;
-    
-    return { vx, vy };
+    if (event.touches) {
+        x = event.touches[0].clientX - rect.left;
+        y = event.touches[0].clientY - rect.top;
+    }
+
+    return { x, y };
 }
 
-canvas.addEventListener('mousedown', function(event) {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+function handleMouseDown(event) {
+    event.preventDefault();
+    const { x: mouseX, y: mouseY } = getCursorPosition(canvas, event);
     if (isMouseOnSkull(mouseX, mouseY)) {
         isDragging = true;
         lastMousePosition = { x: mouseX, y: mouseY };
@@ -52,32 +54,42 @@ canvas.addEventListener('mousedown', function(event) {
         lastTime = Date.now();
         secondLastTime = lastTime;
     }
-});
+}
 
-canvas.addEventListener('mousemove', function(event) {
+function handleMouseMove(event) {
+    event.preventDefault();
     if (isDragging) {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
+        const { x: mouseX, y: mouseY } = getCursorPosition(canvas, event);
         x = mouseX;
         y = mouseY;
-
+        
         secondLastMousePosition = lastMousePosition;
         secondLastTime = lastTime;
-
+        
         lastMousePosition = { x: mouseX, y: mouseY };
         lastTime = Date.now();
     }
-});
+}
 
-canvas.addEventListener('mouseup', function(event) {
+function handleMouseUp(event) {
+    event.preventDefault();
     if (isDragging) {
-        const velocity = calculateVelocityOnRelease();
-        vx = velocity.vx;
-        vy = velocity.vy;
+        const currentTime = Date.now();
+        const deltaTime = (currentTime - secondLastTime) / 1000; // Time in seconds
+        if (deltaTime > 0) {
+            vx = ((lastMousePosition.x - secondLastMousePosition.x) / deltaTime) * velocityScale;
+            vy = ((lastMousePosition.y - secondLastMousePosition.y) / deltaTime) * velocityScale;
+        }
         isDragging = false;
     }
-});
+}
+
+canvas.addEventListener('mousedown', handleMouseDown);
+canvas.addEventListener('touchstart', handleMouseDown);
+canvas.addEventListener('mousemove', handleMouseMove);
+canvas.addEventListener('touchmove', handleMouseMove);
+canvas.addEventListener('mouseup', handleMouseUp);
+canvas.addEventListener('touchend', handleMouseUp);
 
 function applyDrag() {
     vx -= dragFactor * vx;
@@ -88,7 +100,7 @@ function update() {
     if (!isDragging) {
         vy += gravity; // Apply gravity to vertical velocity
         applyDrag(); // Apply drag to both velocities
-
+        
         x += vx; // Update horizontal position
         y += vy; // Update vertical position
 
