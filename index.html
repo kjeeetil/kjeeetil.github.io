@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bouncing Skull Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        #comments {
+            margin-top: 20px;
+        }
+        .comment {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    
+    <div id="comment-section">
+        <h3>Comments</h3>
+        <textarea id="comment-input" rows="4" cols="50"></textarea><br>
+        <button onclick="postComment()">Post Comment</button>
+        <div id="comments"></div>
+    </div>
+
+    <script src="bouncingBall.js"></script>
+    <script src="commentSystem.js"></script>
+</body>
+</html>
